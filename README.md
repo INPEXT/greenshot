@@ -47,3 +47,9 @@ I will add a description here later to explain how include your API keys so you 
 
 P.S.
 Statistics on the Greenshot project, supplied by Open HUB, can be found [here](https://www.openhub.net/p/greenshot)
+
+
+Changes made in this forked version (by @INPEXT)
+-----------------------------------
+* An option to save screenshots to a PDF file format was added, which included:
+  * Intergration of PDFClown (https://pdfclown.org/) with into the greenshotplugin project
