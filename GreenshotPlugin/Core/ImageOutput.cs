@@ -22,6 +22,7 @@
 using Greenshot.IniFile;
 using Greenshot.Plugin;
 using GreenshotPlugin.Controls;
+using GreenshotPlugin.Pdf;
 using log4net;
 using System;
 using System.Diagnostics;
@@ -119,7 +120,10 @@ namespace GreenshotPlugin.Core {
 					case OutputFormat.jpg:
 						imageFormat = ImageFormat.Jpeg;
 						break;
-					case OutputFormat.tiff:
+                    case OutputFormat.pdf:
+                        imageFormat = ImageFormat.Jpeg;
+                        break;
+                    case OutputFormat.tiff:
 						imageFormat = ImageFormat.Tiff;
 						break;
 					default:
@@ -147,29 +151,53 @@ namespace GreenshotPlugin.Core {
 				}
 
 				if (Equals(imageFormat, ImageFormat.Jpeg)) {
-					bool foundEncoder = false;
-					foreach (ImageCodecInfo imageCodec in ImageCodecInfo.GetImageEncoders()) {
-						if (imageCodec.FormatID == imageFormat.Guid) {
-							EncoderParameters parameters = new EncoderParameters(1);
-							parameters.Param[0] = new EncoderParameter(Encoder.Quality, outputSettings.JPGQuality);
-							// Removing transparency if it's not supported in the output
-							if (Image.IsAlphaPixelFormat(imageToSave.PixelFormat)) {
-								Image nonAlphaImage = ImageHelper.Clone(imageToSave, PixelFormat.Format24bppRgb);
-								AddTag(nonAlphaImage);
-								nonAlphaImage.Save(targetStream, imageCodec, parameters);
-								nonAlphaImage.Dispose();
-								nonAlphaImage = null;
-							} else {
-								AddTag(imageToSave);
-								imageToSave.Save(targetStream, imageCodec, parameters);
-							}
-							foundEncoder = true;
-							break;
-						}
-					}
-					if (!foundEncoder) {
-						throw new ApplicationException("No JPG encoder found, this should not happen.");
-					}
+                    // Output to PDF file
+                    if (outputSettings.Format == OutputFormat.pdf)
+                    {
+                        IPdfExporter pdfhandler = new PdfClownExporter();
+                        using (MemoryStream tmpStream = new MemoryStream())
+                        {
+                            pdfhandler.Export(stream, imageToSave, new PdfInfo
+                            {
+                                Author = "",
+                                Creator = "",
+                                Keywords = "",
+                                Subject = "",
+                                Title = ""
+                            });
+                        }
+                    }
+                    else
+                    {
+                        bool foundEncoder = false;
+                        foreach (ImageCodecInfo imageCodec in ImageCodecInfo.GetImageEncoders())
+                        {
+                            if (imageCodec.FormatID == imageFormat.Guid)
+                            {
+                                EncoderParameters parameters = new EncoderParameters(1);
+                                parameters.Param[0] = new EncoderParameter(Encoder.Quality, outputSettings.JPGQuality);
+                                // Removing transparency if it's not supported in the output
+                                if (Image.IsAlphaPixelFormat(imageToSave.PixelFormat))
+                                {
+                                    Image nonAlphaImage = ImageHelper.Clone(imageToSave, PixelFormat.Format24bppRgb);
+                                    AddTag(nonAlphaImage);
+                                    nonAlphaImage.Save(targetStream, imageCodec, parameters);
+                                    nonAlphaImage.Dispose();
+                                    nonAlphaImage = null;
+                                }
+                                else {
+                                    AddTag(imageToSave);
+                                    imageToSave.Save(targetStream, imageCodec, parameters);
+                                }
+                                foundEncoder = true;
+                                break;
+                            }
+                        }
+                        if (!foundEncoder)
+                        {
+                            throw new ApplicationException("No JPG encoder found, this should not happen.");
+                        }
+                    }
 				} else {
 					bool needsDispose = false;
 					// Removing transparency if it's not supported in the output

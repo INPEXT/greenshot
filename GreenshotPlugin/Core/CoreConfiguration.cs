@@ -34,7 +34,7 @@ namespace GreenshotPlugin.Core {
 		PNG, DIB, HTML, HTMLDATAURL, BITMAP, DIBV5
 	}
 	public enum OutputFormat {
-		bmp, gif, jpg, png, tiff, greenshot
+		bmp, gif, jpg, png, pdf, tiff, greenshot
 	}
 	public enum WindowCaptureMode {
 		Screen, GDI, Aero, AeroTransparent, Auto
